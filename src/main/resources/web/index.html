@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Public Transport Management System (PTMS) - GoF Design Patterns</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0b0f19;
+            --surface: #131b2e;
+            --surface-hover: #1a253f;
+            --surface-card: rgba(22, 32, 54, 0.7);
+            --border: rgba(255, 255, 255, 0.08);
+            --border-glow: rgba(99, 102, 241, 0.3);
+            --primary: #6366f1;
+            --primary-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            --accent-cyan: #06b6d4;
+            --accent-emerald: #10b981;
+            --accent-amber: #f59e0b;
+            --accent-rose: #f43f5e;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --radius-lg: 16px;
+            --radius-md: 10px;
+            --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background-color: var(--bg);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(6, 182, 212, 0.1) 0px, transparent 50%);
+            color: var(--text-main);
+            font-family: var(--font-sans);
+            min-height: 100vh;
+            padding: 24px;
+        }
+
+        .container { max-width: 1300px; margin: 0 auto; }
+
+        /* Header */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--surface-card);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 20px 28px;
+            margin-bottom: 24px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .brand h1 { font-size: 1.5rem; font-weight: 800; background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .brand p { font-size: 0.85rem; color: var(--text-muted); margin-top: 2px; }
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--accent-emerald);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 9999px;
+            padding: 6px 14px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .pulse-dot { width: 8px; height: 8px; background: var(--accent-emerald); border-radius: 50%; box-shadow: 0 0 10px var(--accent-emerald); }
+
+        /* Pattern Navigation Tabs */
+        .tabs {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 10px;
+            margin-bottom: 24px;
+        }
+        .tab-btn {
+            background: var(--surface-card);
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            padding: 12px 16px;
+            border-radius: var(--radius-md);
+            font-size: 0.88rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            transition: all 0.2s ease;
+            text-align: left;
+        }
+        .tab-btn span.role { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent-cyan); }
+        .tab-btn:hover { background: var(--surface-hover); color: var(--text-main); border-color: rgba(255,255,255,0.15); }
+        .tab-btn.active {
+            background: rgba(99, 102, 241, 0.15);
+            border-color: var(--primary);
+            color: var(--text-main);
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.2);
+        }
+
+        /* Content Sections */
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Grid Cards */
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+        @media (max-width: 900px) { .grid-2 { grid-template-columns: 1fr; } }
+
+        .card {
+            background: var(--surface-card);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+            margin-bottom: 24px;
+        }
+        .card h2 { font-size: 1.15rem; font-weight: 700; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+        .card p.desc { font-size: 0.82rem; color: var(--text-muted); margin-bottom: 18px; line-height: 1.4; }
+
+        /* Forms */
+        .form-group { margin-bottom: 14px; }
+        .form-group label { display: block; font-size: 0.78rem; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; }
+        .form-control {
+            width: 100%;
+            background: rgba(11, 15, 25, 0.8);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 10px 14px;
+            color: var(--text-main);
+            font-size: 0.88rem;
+            font-family: var(--font-sans);
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .form-control:focus { border-color: var(--primary); box-shadow: 0 0 10px rgba(99,102,241,0.25); }
+
+        .btn {
+            background: var(--primary-gradient);
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            padding: 10px 18px;
+            font-size: 0.88rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: opacity 0.2s, transform 0.1s;
+        }
+        .btn:hover { opacity: 0.95; transform: translateY(-1px); }
+        .btn:active { transform: translateY(0); }
+        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-main); }
+        .btn-outline:hover { background: var(--surface-hover); }
+        .btn-danger { background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); }
+        .btn-success { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+        .btn-amber { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+
+        /* Data list items */
+        .list-container { display: flex; flex-direction: column; gap: 10px; max-height: 480px; overflow-y: auto; }
+        .list-item {
+            background: rgba(11, 15, 25, 0.6);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 14px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+        }
+        .item-title { font-weight: 700; color: #fff; margin-bottom: 4px; }
+        .item-meta { font-size: 0.78rem; color: var(--text-muted); font-family: var(--font-mono); }
+        .tag {
+            font-size: 0.72rem;
+            padding: 4px 10px;
+            border-radius: 9999px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .tag-blue { background: rgba(99, 102, 241, 0.15); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3); }
+        .tag-green { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+        .tag-red { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+        .tag-amber { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+
+        /* Board log */
+        .board-box {
+            background: #060911;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            color: #38bdf8;
+            min-height: 140px;
+            max-height: 220px;
+            overflow-y: auto;
+            line-height: 1.6;
+        }
+
+        /* Toast notifications */
+        #toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: var(--surface);
+            border: 1px solid var(--primary);
+            color: #fff;
+            padding: 14px 20px;
+            border-radius: var(--radius-md);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            font-size: 0.85rem;
+            display: none;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <div class="brand">
+                <h1>Public Transport Management System</h1>
+                <p>GoF Design Patterns Architecture Demonstration &bull; Java 17 Standard SE</p>
+            </div>
+            <div class="status-badge">
+                <div class="pulse-dot"></div>
+                <span>Active Server &bull; Port 8085</span>
+            </div>
+        </header>
+
+        <!-- Pattern Navigation Tabs -->
+        <nav class="tabs">
+            <button class="tab-btn active" onclick="switchTab('builder')">
+                <span class="role">Builder Pattern</span>
+                <span>1. Route & Ticket Builder</span>
+            </button>
+            <button class="tab-btn" onclick="switchTab('prototype')">
+                <span class="role">Prototype Pattern</span>
+                <span>2. Prototype Registry & Clone</span>
+            </button>
+            <button class="tab-btn" onclick="switchTab('template')">
+                <span class="role">Template Method</span>
+                <span>3. Multi-Modal Booking</span>
+            </button>
+            <button class="tab-btn" onclick="switchTab('memento')">
+                <span class="role">Memento Pattern</span>
+                <span>4. Undo/Redo Schedule Editor</span>
+            </button>
+            <button class="tab-btn" onclick="switchTab('mediator')">
+                <span class="role">Mediator Pattern</span>
+                <span>5. Transport Control Center</span>
+            </button>
+        </nav>
+
+        <!-- TAB 1: BUILDER -->
+        <section id="tab-builder" class="tab-content active">
+            <div class="grid-2">
+                <div class="card">
+                    <h2><span class="tag tag-blue">Builder</span> Construct Route with RouteBuilder</h2>
+                    <p class="desc">Fluent API enforcing integrity rules: at least 2 stops, positive fare, and frequency validation.</p>
+                    <form onsubmit="handleCreateRoute(event)">
+                        <div class="form-group">
+                            <label>Route Identifier</label>
+                            <input id="r-id" class="form-control" placeholder="RT-303" value="RT-303" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Route Name</label>
+                            <input id="r-name" class="form-control" placeholder="Express Coastal Line" value="Express Coastal Line" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Ordered Stops (comma-separated, min 2)</label>
+                            <input id="r-stops" class="form-control" placeholder="Harbor Terminal, Midtown, Coastal Pier" value="Harbor Terminal, Midtown, Coastal Pier" required>
+                        </div>
+                        <div class="grid-2" style="gap:12px;">
+                            <div class="form-group">
+                                <label>Base Fare ($)</label>
+                                <input id="r-fare" type="number" step="0.5" class="form-control" value="25.0" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Frequency (min)</label>
+                                <input id="r-freq" type="number" class="form-control" value="15" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn">Build Route (Fluent API)</button>
+                    </form>
+                </div>
+                <div class="card">
+                    <h2>Active Routes Product List</h2>
+                    <p class="desc">Constructed immutable Route product instances stored in-memory.</p>
+                    <div id="route-list" class="list-container">Loading routes...</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 2: PROTOTYPE -->
+        <section id="tab-prototype" class="tab-content">
+            <div class="grid-2">
+                <div class="card">
+                    <h2><span class="tag tag-green">Registry</span> Instantiate from VehicleRegistry</h2>
+                    <p class="desc">Retrieves registered pre-configured prototypes and returns independent deep copies.</p>
+                    <div class="form-group">
+                        <label>Select Template</label>
+                        <select id="proto-template" class="form-control">
+                            <option value="AC Bus">AC Bus (Volvo 9400 B11R, 45 Cap, WiFi, CCTV)</option>
+                            <option value="Non-AC Bus">Non-AC Bus (Tata Starbus, 55 Cap, CNG)</option>
+                            <option value="Electric Bus">Electric Bus (BYD K9, 38 Cap, EV, USB)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>New Registration ID</label>
+                        <input id="proto-newid" class="form-control" value="FLEET-EV-700">
+                    </div>
+                    <button class="btn btn-success" onclick="handleInstantiateTemplate()">Clone from Registry</button>
+
+                    <hr style="border:0; border-top:1px solid var(--border); margin: 24px 0;">
+
+                    <h2><span class="tag tag-blue">Deep Clone</span> Clone Schedule via copy()</h2>
+                    <p class="desc">Clones e.g. "Weekday Express" &rarr; "Weekend Express" with independent timing mutations.</p>
+                    <div class="form-group">
+                        <label>Select Source Schedule</label>
+                        <select id="clone-sch-source" class="form-control"></select>
+                    </div>
+                    <div class="form-group">
+                        <label>New Schedule ID</label>
+                        <input id="clone-sch-id" class="form-control" value="SCH-WEEKEND-01">
+                    </div>
+                    <div class="form-group">
+                        <label>New Day Type</label>
+                        <input id="clone-sch-day" class="form-control" value="Weekend">
+                    </div>
+                    <button class="btn" onclick="handleCloneSchedule()">Clone Schedule Deeply</button>
+                </div>
+                <div class="card">
+                    <h2>Fleet & Cloned Schedules</h2>
+                    <p class="desc">Active vehicles and cloned schedules verified with deep-copied lists.</p>
+                    <div id="fleet-list" class="list-container">Loading fleet...</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 3: TEMPLATE METHOD -->
+        <section id="tab-template" class="tab-content">
+            <div class="grid-2">
+                <div class="card">
+                    <h2><span class="tag tag-amber">Template</span> Multi-Modal Booking</h2>
+                    <p class="desc">Template Method enforces: validate &rarr; calculateFare &rarr; reserveSeat &rarr; processPayment &rarr; issueTicket &rarr; afterBooking().</p>
+                    <div class="form-group">
+                        <label>Transport Mode</label>
+                        <select id="book-mode" class="form-control">
+                            <option value="BUS">Bus (Per-Stop Pricing + Reserved Aisle/Window Seat)</option>
+                            <option value="METRO">Metro (Distance Slab Pricing + Open Standing Allocation)</option>
+                            <option value="TRAIN">Train (Class-Tiered Berth + Manifest Update Hook)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Passenger Full Name</label>
+                        <input id="book-name" class="form-control" value="Sarah Jenkins">
+                    </div>
+                    <div class="grid-2" style="gap:12px;">
+                        <div class="form-group">
+                            <label>Source Station</label>
+                            <input id="book-src" class="form-control" value="Central Station">
+                        </div>
+                        <div class="form-group">
+                            <label>Destination Station</label>
+                            <input id="book-dst" class="form-control" value="Airport T2">
+                        </div>
+                    </div>
+                    <div class="grid-2" style="gap:12px;">
+                        <div class="form-group">
+                            <label>Travel Class / Pref</label>
+                            <select id="book-class" class="form-control">
+                                <option value="STANDARD">Standard</option>
+                                <option value="SLEEPER">Sleeper (Train)</option>
+                                <option value="AC_3_TIER">3-Tier AC (Train)</option>
+                                <option value="AC_1_TIER">1st AC (Train)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Discount (%)</label>
+                            <input id="book-disc" type="number" class="form-control" value="10">
+                        </div>
+                    </div>
+                    <button class="btn btn-amber" onclick="handleBookTicket()">Execute book() Template Method</button>
+                </div>
+                <div class="card">
+                    <h2>Issued Tickets (Builder Product)</h2>
+                    <p class="desc">Tickets issued by TicketBuilder inside the template method.</p>
+                    <div id="ticket-list" class="list-container">Loading tickets...</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 4: MEMENTO -->
+        <section id="tab-memento" class="tab-content">
+            <div class="grid-2">
+                <div class="card">
+                    <h2><span class="tag tag-red">Memento</span> Schedule State Caretaker</h2>
+                    <p class="desc">Schedule acts as Originator creating immutable ScheduleMemento records. ScheduleHistory acts as Caretaker managing Undo and Redo Deque stacks.</p>
+                    <div class="form-group">
+                        <label>Select Target Schedule</label>
+                        <select id="mem-sch" class="form-control"></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Add New Departure Timing Slot</label>
+                        <input id="mem-time" class="form-control" value="22:45">
+                    </div>
+                    <div style="display:flex; gap:10px; margin-bottom: 20px;">
+                        <button class="btn btn-primary" onclick="handleEditSchedule()">Push Edit & Save Memento</button>
+                        <button id="btn-undo" class="btn btn-outline" onclick="handleUndo()">↶ Undo</button>
+                        <button id="btn-redo" class="btn btn-outline" onclick="handleRedo()">↷ Redo</button>
+                    </div>
+                    <div class="board-box" id="mem-status">Caretaker History: Undo Stack (0) | Redo Stack (0)</div>
+                </div>
+                <div class="card">
+                    <h2>Live Originator State</h2>
+                    <p class="desc">Real-time schedule parameters reflecting restored/mutated mementos.</p>
+                    <div id="schedule-display" class="list-container">Loading schedules...</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 5: MEDIATOR -->
+        <section id="tab-mediator" class="tab-content">
+            <div class="grid-2">
+                <div class="card">
+                    <h2><span class="tag tag-blue">Mediator</span> Trigger Incident via Colleague</h2>
+                    <p class="desc">Bus, Station, and Driver NEVER reference each other. All communications route through TransportControlCenter.</p>
+                    <div class="form-group">
+                        <label>Active Fleet Bus Colleague</label>
+                        <input id="med-busid" class="form-control" value="BUS-VOLVO-01">
+                    </div>
+                    <div class="form-group">
+                        <label>Simulate Delay (Minutes)</label>
+                        <div style="display:flex; gap:10px;">
+                            <input id="med-delay" type="number" class="form-control" value="20">
+                            <button class="btn btn-amber" onclick="handleReportDelay()">Report Delay</button>
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-top: 18px;">
+                        <label>Simulate Mechanical Breakdown</label>
+                        <div style="display:flex; gap:10px;">
+                            <input id="med-reason" class="form-control" value="Coolant Leak">
+                            <button class="btn btn-danger" onclick="handleReportBreakdown()">Report Breakdown</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <h2>Station Displays & Passenger Feed</h2>
+                    <p class="desc">Updated automatically by the Mediator upon receiving events.</p>
+                    <div class="form-group">
+                        <label>Station Electronic Departure Boards</label>
+                        <div id="station-boards" class="board-box">Awaiting events...</div>
+                    </div>
+                    <div class="form-group">
+                        <label>Passenger Alert Push Stream</label>
+                        <div id="passenger-alerts" class="board-box" style="color:#a7f3d0;">No active passenger alerts.</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <div id="toast"></div>
+
+    <script>
+        let currentTab = 'builder';
+
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+            document.getElementById('tab-' + tab).classList.add('active');
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.style.display = 'block';
+            setTimeout(() => { t.style.display = 'none'; }, 3500);
+        }
+
+        async function fetchState() {
+            try {
+                const res = await fetch('/api/state');
+                const data = await res.json();
+                renderState(data);
+            } catch (err) {
+                console.error('State sync error:', err);
+            }
+        }
+
+        function renderState(data) {
+            // Render Routes
+            const routeList = document.getElementById('route-list');
+            if (data.routes && data.routes.length > 0) {
+                routeList.innerHTML = data.routes.map(r => `
+                    <div class="list-item">
+                        <div>
+                            <div class="item-title">[${r.id}] ${r.name}</div>
+                            <div class="item-meta">Stops: ${r.stops.join(' &rarr; ')} &bull; Every ${r.frequency} min</div>
+                        </div>
+                        <span class="tag tag-blue">$${r.baseFare.toFixed(2)} base</span>
+                    </div>
+                `).join('');
+            }
+
+            // Render Fleet
+            const fleetList = document.getElementById('fleet-list');
+            if (data.fleet && data.fleet.length > 0) {
+                fleetList.innerHTML = data.fleet.map(v => `
+                    <div class="list-item">
+                        <div>
+                            <div class="item-title">${v.id} &bull; ${v.model}</div>
+                            <div class="item-meta">Features: ${v.features.join(', ')}</div>
+                        </div>
+                        <span class="tag tag-green">${v.capacity} Seats</span>
+                    </div>
+                `).join('');
+            }
+
+            // Render Tickets
+            const ticketList = document.getElementById('ticket-list');
+            if (data.tickets && data.tickets.length > 0) {
+                ticketList.innerHTML = data.tickets.map(t => `
+                    <div class="list-item">
+                        <div>
+                            <div class="item-title">[${t.id}] ${t.passenger} (${t.type})</div>
+                            <div class="item-meta">${t.src} &rarr; ${t.dst} &bull; Seat: ${t.seat} &bull; $${t.fare.toFixed(2)}</div>
+                        </div>
+                        <div style="display:flex; gap:8px; align-items:center;">
+                            <span class="tag ${t.status === 'CONFIRMED' ? 'tag-green' : 'tag-red'}">${t.status}</span>
+                            ${t.status === 'CONFIRMED' ? `<button class="btn btn-outline" style="padding:4px 8px; font-size:0.75rem;" onclick="handleCancelTicket('${t.id}')">Cancel</button>` : ''}
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                ticketList.innerHTML = '<p style="color:var(--text-muted); font-size:0.85rem;">No tickets issued yet.</p>';
+            }
+
+            // Render Schedules
+            const schDisplay = document.getElementById('schedule-display');
+            const cloneSchSelect = document.getElementById('clone-sch-source');
+            const memSchSelect = document.getElementById('mem-sch');
+
+            if (data.schedules && data.schedules.length > 0) {
+                schDisplay.innerHTML = data.schedules.map(s => `
+                    <div class="list-item">
+                        <div>
+                            <div class="item-title">[${s.id}] ${s.routeName} (${s.dayType})</div>
+                            <div class="item-meta">Vehicle: ${s.vehicleId} &bull; Timings: ${s.departureTimes.join(', ')}</div>
+                        </div>
+                        <span class="tag tag-blue">${s.departureTimes.length} Runs</span>
+                    </div>
+                `).join('');
+
+                const optionsHtml = data.schedules.map(s => `<option value="${s.id}">[${s.id}] ${s.routeName} (${s.dayType})</option>`).join('');
+                if (cloneSchSelect.innerHTML !== optionsHtml) cloneSchSelect.innerHTML = optionsHtml;
+                if (memSchSelect.innerHTML !== optionsHtml) memSchSelect.innerHTML = optionsHtml;
+            }
+
+            // Memento status
+            document.getElementById('mem-status').textContent = `Caretaker Deque Stacks: Undo Stack (${data.undoCount}) | Redo Stack (${data.redoCount})`;
+            document.getElementById('btn-undo').disabled = data.undoCount === 0;
+            document.getElementById('btn-redo').disabled = data.redoCount === 0;
+
+            // Mediator Boards
+            const stationBoards = document.getElementById('station-boards');
+            if (data.stationBoards && data.stationBoards.length > 0) {
+                stationBoards.innerHTML = data.stationBoards.map(b => `[${b.station}] &bull; ${b.alert}`).join('<br>');
+            } else {
+                stationBoards.innerHTML = 'All station boards clear &bull; On schedule.';
+            }
+
+            const passengerAlerts = document.getElementById('passenger-alerts');
+            if (data.passengerAlerts && data.passengerAlerts.length > 0) {
+                passengerAlerts.innerHTML = data.passengerAlerts.map(a => `&bull; ${a}`).join('<br>');
+            } else {
+                passengerAlerts.innerHTML = 'No emergency passenger notifications broadcasted.';
+            }
+        }
+
+        async function handleCreateRoute(e) {
+            e.preventDefault();
+            const payload = {
+                id: document.getElementById('r-id').value,
+                name: document.getElementById('r-name').value,
+                stops: document.getElementById('r-stops').value.split(',').map(s => s.trim()),
+                fare: parseFloat(document.getElementById('r-fare').value),
+                frequency: parseInt(document.getElementById('r-freq').value)
+            };
+            const res = await fetch('/api/route', { method:'POST', body: JSON.stringify(payload) });
+            const data = await res.json();
+            showToast(data.message);
+            fetchState();
+        }
+
+        async function handleInstantiateTemplate() {
+            const template = document.getElementById('proto-template').value;
+            const newId = document.getElementById('proto-newid').value;
+            const res = await fetch('/api/create-vehicle', { method:'POST', body: JSON.stringify({ template, newId }) });
+            const data = await res.json();
+            showToast(data.message);
+            fetchState();
+        }
+
+        async function handleCloneSchedule() {
+            const sourceId = document.getElementById('clone-sch-source').value;
+            const newId = document.getElementById('clone-sch-id').value;
+            const dayType = document.getElementById('clone-sch-day').value;
+            const res = await fetch('/api/clone-schedule', { method:'POST', body: JSON.stringify({ sourceId, newId, dayType }) });
+            const data = await res.json();
+            showToast(data.message);
+            fetchState();
+        }
+
+        async function handleBookTicket() {
+            const payload = {
+                mode: document.getElementById('book-mode').value,
+                passenger: document.getElementById('book-name').value,
+                source: document.getElementById('book-src').value,
+                destination: document.getElementById('book-dst').value,
+                travelClass: document.getElementById('book-class').value,
+                discount: parseFloat(document.getElementById('book-disc').value)
+            };
+            const res = await fetch('/api/book', { method:'POST', body: JSON.stringify(payload) });
+            const data = await res.json();
+            showToast(data.message);
+            fetchState();
+        }
+
+        async function handleCancelTicket(ticketId) {
+            const res = await fetch('/api/cancel-ticket', { method:'POST', body: JSON.stringify({ ticketId }) });
+            const data = await res.json();
+            showToast(data.message);
+            fetchState();
+        }
+
+        async function handleEditSchedule() {
+            const scheduleId = document.getElementById('mem-sch').value;
+            const newTiming = document.getElementById('mem-time').value;
+            const res = await fetch('/api/edit-schedule', { method:'POST', body: JSON.stringify({ scheduleId, newTiming }) });
+            const data = await res.json();
+            showToast(data.message);
+            fetchState();
+        }
+
+        async function handleUndo() {
+            const res = await fetch('/api/undo', { method:'POST' });
+            const data = await res.json();
+            showToast(data.message);
+            fetchState();
+        }
+
+        async function handleRedo() {
+            const res = await fetch('/api/redo', { method:'POST' });
+            const data = await res.json();
+            showToast(data.message);
+            fetchState();
+        }
+
+        async function handleReportDelay() {
+            const busId = document.getElementById('med-busid').value;
+            const delayMinutes = parseInt(document.getElementById('med-delay').value);
+            const res = await fetch('/api/simulate-delay', { method:'POST', body: JSON.stringify({ busId, delayMinutes }) });
+            const data = await res.json();
+            showToast(data.message);
+            fetchState();
+        }
+
+        async function handleReportBreakdown() {
+            const busId = document.getElementById('med-busid').value;
+            const reason = document.getElementById('med-reason').value;
+            const res = await fetch('/api/simulate-breakdown', { method:'POST', body: JSON.stringify({ busId, reason }) });
+            const data = await res.json();
+            showToast(data.message);
+            fetchState();
+        }
+
+        // Auto polling
+        fetchState();
+        setInterval(fetchState, 2000);
+    </script>
+</body>
+</html>

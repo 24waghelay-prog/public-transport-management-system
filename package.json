@@ -1,0 +1,16 @@
+{
+  "name": "ptms",
+  "version": "1.0.0",
+  "description": "A modular, framework-free Java 17 console application engineered for academic demonstration of five classic Gang of Four (GoF) design patterns: **Prototype**, **Memento**, **Template Method**, **Builder**, and **Mediator**.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "untun": "^0.2.2"
+  }
+}

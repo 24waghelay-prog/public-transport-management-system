@@ -1,0 +1,11 @@
+services:
+  ptms-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ptms-transport-system
+    ports:
+      - "8085:8085"
+    restart: unless-stopped
+    environment:
+      - JAVA_TOOL_OPTIONS=-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0

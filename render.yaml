@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: ptms-transport-system
+    env: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    region: oregon
+    healthCheckPath: /api/state
+    autoDeploy: true
+    envVars:
+      - key: PORT
+        value: 8085
+      - key: HEADLESS
+        value: "true"
