@@ -2,6 +2,10 @@
 
 A modular, framework-free Java 17 console application engineered for academic demonstration of five classic Gang of Four (GoF) design patterns: **Prototype**, **Memento**, **Template Method**, **Builder**, and **Mediator**.
 
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/24waghelay-prog/public-transport-management-system)
+[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/new/template?template=https%3A%2F%2Fgithub.com%2F24waghelay-prog%2Fpublic-transport-management-system)
+[![Deploy to Koyeb](https://www.koyeb.com/static/images/deploy/button.svg)](https://app.koyeb.com/deploy?type=git&repository=github.com/24waghelay-prog/public-transport-management-system&branch=main)
+
 ---
 
 ## 1. Project Overview

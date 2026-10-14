@@ -1,7 +1,7 @@
 services:
   - type: web
     name: ptms-transport-system
-    env: docker
+    runtime: docker
     dockerfilePath: ./Dockerfile
     plan: free
     region: oregon
